@@ -15,7 +15,10 @@ use fitgirl_torrent_scrap::{
 };
 
 #[derive(argh::FromArgs)]
-#[argh(description = "Scraper for torrents from fitgirl-repacks.site")]
+#[argh(
+    help_triggers("-h", "--help"),
+    description = "Scraper for torrents from fitgirl-repacks.site"
+)]
 struct Args {
     /// scrape from this page num. page 0 is treated as page 1.
     #[argh(option, default = "1")]
