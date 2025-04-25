@@ -11,7 +11,7 @@ use tracing::{level_filters::LevelFilter, warn};
 use tracing_subscriber::EnvFilter;
 
 use fitgirl_torrent_scrap::{
-    DECRYPT_WORKERS, FETCH_WORKERS, OUTPUT_DIR, decrypt::download_worker, fetch::fetch_worker,
+    DECRYPT_WORKERS, FETCH_WORKERS, OUTPUT_DIR, extract_links::download_worker, fetch::fetch_worker,
 };
 
 #[derive(argh::FromArgs)]

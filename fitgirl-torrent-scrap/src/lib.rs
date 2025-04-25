@@ -1,5 +1,5 @@
-pub mod decrypt;
-pub mod extract;
+pub mod extract_links;
+pub mod decrypt_torrents;
 pub mod fetch;
 
 pub const FETCH_WORKERS: usize = 5;
