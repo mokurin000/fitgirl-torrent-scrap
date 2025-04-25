@@ -103,9 +103,6 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                                 continue;
                             };
                             let output = Path::new(OUTPUT_DIR).join(attachment_name);
-                            if output.exists() {
-                                _is_done.store(true, Ordering::Release);
-                            }
                             let _ = fs::write(output, torrent);
                         }
                         Err(fitgirl_decrypt::Error::JSONSerialize(_)) => {
