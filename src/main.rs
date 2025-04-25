@@ -4,13 +4,16 @@ use std::{
     path::Path,
     sync::{
         Arc,
-        atomic::{AtomicBool, AtomicU16, Ordering},
+        atomic::{AtomicBool, Ordering},
     },
     time::Duration,
 };
 
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine};
 use scraper::Selector;
+use tracing_subscriber::EnvFilter;
+
+use tracing::{error, info, level_filters::LevelFilter, warn};
 
 const FETCH_WORKERS: usize = 5;
 const DECRYPT_WORKERS: usize = 10;
@@ -20,28 +23,42 @@ const OUTPUT_DIR: &str = "./output/";
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     fs::create_dir_all(OUTPUT_DIR)?;
 
+    tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
+        .init();
+
+    let start_page = std::env::args().nth(1).as_deref().unwrap_or("1").parse()?;
+    let end_page: u16 = std::env::args()
+        .nth(2)
+        .unwrap_or(u16::MAX.to_string())
+        .parse()?;
+
     let (tx, rx) = kanal::bounded_async(FETCH_WORKERS);
     let (tx_text, rx_text) = kanal::bounded(DECRYPT_WORKERS);
     let is_done = Arc::new(AtomicBool::new(false));
-    let current_page = Arc::new(AtomicU16::new(1));
 
     let _is_done = is_done.clone();
-    let _current_page = current_page.clone();
     ctrlc::set_handler(move || {
-        println!("current_page: {}", _current_page.load(Ordering::Acquire));
+        if _is_done.load(Ordering::Acquire) {
+            warn!("ctrl-c twice, force-exiting");
+            std::process::exit(0);
+        }
+
         _is_done.store(true, Ordering::Release);
     })?;
 
     let _is_done = is_done.clone();
-    let _current_page = current_page.clone();
     tokio::spawn(async move {
-        for i in 1..=u16::MAX {
+        for page in start_page..=end_page {
             if _is_done.load(Ordering::Acquire) {
                 let _ = tx.close();
                 break;
             }
-            _current_page.store(i, Ordering::Release);
-            let _ = tx.send(i).await;
+            let _ = tx.send(page).await;
         }
     });
 
@@ -57,10 +74,15 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         joinset.spawn(async move {
             while let Ok(page) = rx.recv().await {
                 let url = format!("https://fitgirl-repacks.site/page/{page}/");
-                if let Ok(resp) = client.get(url).send().await {
-                    let text = resp.text().await.unwrap();
-                    let _ = tx_text.send(text).await;
-                }
+                let Ok(resp) = client.get(url).send().await else {
+                    continue;
+                };
+                let Ok(text) = resp.text().await else {
+                    continue;
+                };
+
+                let _ = tx_text.send(text).await;
+                info!("processed {page}");
             }
         });
     }
@@ -106,10 +128,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                             let _ = fs::write(output, torrent);
                         }
                         Err(fitgirl_decrypt::Error::JSONSerialize(_)) => {
-                            eprintln!("{url}: attachment is missing");
+                            error!("{url}: attachment is missing");
                         }
                         Err(e) => {
-                            eprintln!("{url}: {e}");
+                            error!("{url}: {e}");
                         }
                     }
                 }
