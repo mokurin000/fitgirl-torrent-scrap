@@ -4,7 +4,7 @@ use std::{
     path::Path,
     sync::{
         Arc,
-        atomic::{AtomicBool, AtomicU16},
+        atomic::{AtomicBool, AtomicU16, Ordering},
     },
 };
 
@@ -12,7 +12,7 @@ use fitgirl_decrypt::{Attachment, Paste, base64::Engine};
 use scraper::Selector;
 
 const FETCH_WORKERS: usize = 5;
-const DECRYPT_WORKERS: usize = 5;
+const DECRYPT_WORKERS: usize = 10;
 const OUTPUT_DIR: &str = "./output/";
 
 #[tokio::main]
@@ -27,21 +27,22 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let _is_done = is_done.clone();
     let _current_page = current_page.clone();
     ctrlc::set_handler(move || {
-        println!(
-            "current_page: {}",
-            _current_page.load(std::sync::atomic::Ordering::Acquire)
-        );
-        _is_done.store(true, std::sync::atomic::Ordering::Release);
+        if _is_done.load(Ordering::Acquire) {
+            std::process::exit(0);
+        }
+        println!("current_page: {}", _current_page.load(Ordering::Acquire));
+        _is_done.store(true, Ordering::Release);
     })?;
 
     let _is_done = is_done.clone();
     let _current_page = current_page.clone();
     tokio::spawn(async move {
         for i in 1..=u16::MAX {
-            if _is_done.load(std::sync::atomic::Ordering::Acquire) {
+            if _is_done.load(Ordering::Acquire) {
+                let _ = tx.close();
                 break;
             }
-            _current_page.store(i, std::sync::atomic::Ordering::Release);
+            _current_page.store(i, Ordering::Release);
             let _ = tx.send(i).await;
         }
     });
@@ -53,6 +54,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         let tx_text = tx_text.as_async().clone();
         let rx = rx.clone();
         let client = client.clone();
+        let _is_done = is_done.clone();
 
         joinset.spawn(async move {
             while let Ok(page) = rx.recv().await {
@@ -77,15 +79,15 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                 let page_end_selector = Selector::parse("h1.page-title").expect("invalid selector");
 
                 if html.select(&page_end_selector).next().is_some() {
-                    _is_done.store(true, std::sync::atomic::Ordering::Release);
-                    return;
+                    _is_done.store(true, Ordering::Release);
+                    break;
                 };
 
-                for paste in html
+                for (paste, url) in html
                     .select(&links_selector)
                     .filter(|e| e.text().collect::<String>() == ".torrent file only")
                     .filter_map(|e| e.attr("href"))
-                    .filter_map(|url| Paste::parse_url(url).ok())
+                    .filter_map(|url| Paste::parse_url(url).ok().map(|paste| (paste, url)))
                 {
                     match paste.decrypt() {
                         Ok(Attachment {
@@ -105,10 +107,17 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                             let output = Path::new(OUTPUT_DIR).join(attachment_name);
                             let _ = fs::write(output, torrent);
                         }
+                        Err(fitgirl_decrypt::Error::JSONSerialize(_)) => {
+                            eprintln!("{url}: attachment is missing");
+                        }
                         Err(e) => {
-                            eprintln!("decrypt error: {e}");
+                            eprintln!("{url}: {e}");
                         }
                     }
+                }
+
+                if _is_done.load(Ordering::Acquire) {
+                    break;
                 }
             }
         });
