@@ -8,7 +8,8 @@ ctrlc = "3.4.6"
 fitgirl-decrypt = "0.1.4"
 kanal = "0.1.1"
 num_cpus = "1.16.0"
-reqwest = "0.12.15"
+nyquest = { git = "https://github.com/bdbai/nyquest", version = "0.0.1-alpha.2", features = ["multipart", "async"] }
+nyquest-preset = { git = "https://github.com/bdbai/nyquest", version = "0.0.1-alpha.1", features = ["multipart", "async"] }
 
 scraper = "0.23.1"
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }

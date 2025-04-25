@@ -10,6 +10,7 @@ use std::{
 };
 
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine};
+use nyquest::Request;
 use scraper::Selector;
 use tracing_subscriber::EnvFilter;
 
@@ -22,6 +23,7 @@ const OUTPUT_DIR: &str = "./output/";
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     fs::create_dir_all(OUTPUT_DIR)?;
+    nyquest_preset::register();
 
     tracing_subscriber::FmtSubscriber::builder()
         .with_env_filter(
@@ -62,7 +64,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         }
     });
 
-    let client = reqwest::ClientBuilder::new().build()?;
+    let client = nyquest::ClientBuilder::default()
+        .base_url("https://fitgirl-repacks.site")
+        .build_async()
+        .await?;
     let mut joinset = tokio::task::JoinSet::new();
 
     for _ in 0..FETCH_WORKERS {
@@ -73,8 +78,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
         joinset.spawn(async move {
             while let Ok(page) = rx.recv().await {
-                let url = format!("https://fitgirl-repacks.site/page/{page}/");
-                let Ok(resp) = client.get(url).send().await else {
+                let url = format!("/page/{page}/");
+                let Ok(resp) = client.request(Request::get(url)).await else {
                     continue;
                 };
                 let Ok(text) = resp.text().await else {
