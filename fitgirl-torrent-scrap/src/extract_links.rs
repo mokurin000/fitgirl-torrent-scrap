@@ -27,6 +27,7 @@ pub async fn download_worker(rx_html: Receiver<String>, is_done: Arc<AtomicBool>
                 .select(&links_selector)
                 .filter(|e| e.text().collect::<String>() == ".torrent file only")
                 .filter_map(|e| e.attr("href"))
+                .filter(|s| !s.contains("sendfile.su"))
                 .map(str::to_string)
                 .collect();
 
