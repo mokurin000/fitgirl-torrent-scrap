@@ -6,6 +6,7 @@ use std::{
         Arc,
         atomic::{AtomicBool, AtomicU16, Ordering},
     },
+    time::Duration,
 };
 
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine};
@@ -27,9 +28,6 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let _is_done = is_done.clone();
     let _current_page = current_page.clone();
     ctrlc::set_handler(move || {
-        if _is_done.load(Ordering::Acquire) {
-            std::process::exit(0);
-        }
         println!("current_page: {}", _current_page.load(Ordering::Acquire));
         _is_done.store(true, Ordering::Release);
     })?;
@@ -105,6 +103,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                                 continue;
                             };
                             let output = Path::new(OUTPUT_DIR).join(attachment_name);
+                            if output.exists() {
+                                _is_done.store(true, Ordering::Release);
+                            }
                             let _ = fs::write(output, torrent);
                         }
                         Err(fitgirl_decrypt::Error::JSONSerialize(_)) => {
@@ -126,7 +127,20 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     drop(tx_text);
     drop(rx);
 
-    joinset.join_all().await;
+    let _is_done = is_done.clone();
+    let wait = async move {
+        loop {
+            tokio::time::sleep(Duration::from_millis(1000)).await;
+            if is_done.load(Ordering::Acquire) {
+                break;
+            }
+        }
+    };
+
+    tokio::select! {
+        _ = joinset.join_all() => {}
+        _ = wait => {}
+    }
 
     Ok(())
 }

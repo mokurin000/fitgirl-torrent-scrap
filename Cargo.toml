@@ -11,7 +11,7 @@ num_cpus = "1.16.0"
 reqwest = "0.12.15"
 
 scraper = "0.23.1"
-tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }
 
 [profile.release]
 codegen-units = 1
