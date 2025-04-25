@@ -1,0 +1,11 @@
+[package]
+name = "count-file-size"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+humansize = "2.1.3"
+librqbit-buffers = "4.2.0"
+librqbit-core = "4.1.0"
+rayon = "1.10.0"

@@ -1,0 +1,16 @@
+[package]
+name = "fitgirl-torrent-scrap"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ctrlc = "3.4.6"
+fitgirl-decrypt = "0.1.4"
+kanal = "0.1.1"
+num_cpus = "1.16.0"
+reqwest = "0.12.15"
+
+scraper = "0.23.1"
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
