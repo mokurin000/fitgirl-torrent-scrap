@@ -6,12 +6,12 @@ use std::{
         Arc,
         atomic::{AtomicBool, Ordering},
     },
-    time::Duration,
 };
 
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine};
 use nyquest::Request;
 use scraper::Selector;
+use tokio::task::spawn_blocking;
 use tracing_subscriber::EnvFilter;
 
 use tracing::{error, info, level_filters::LevelFilter, warn};
@@ -96,25 +96,48 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         let rx_text = rx_text.clone();
         let _is_done = is_done.clone();
 
-        joinset.spawn_blocking(move || {
+        joinset.spawn(async move {
             while let Ok(text) = rx_text.recv() {
-                let html = scraper::Html::parse_document(&text);
+                let clone_is_done = _is_done.clone();
+                let should_break = spawn_blocking(move || {
+                    let html = scraper::Html::parse_document(&text);
 
-                let links_selector = Selector::parse("a").expect("invalid selector");
-                let page_end_selector = Selector::parse("h1.page-title").expect("invalid selector");
+                    let links_selector = Selector::parse("a").expect("invalid selector");
+                    let page_end_selector =
+                        Selector::parse("h1.page-title").expect("invalid selector");
 
-                if html.select(&page_end_selector).next().is_some() {
-                    _is_done.store(true, Ordering::Release);
-                    break;
-                };
+                    if html.select(&page_end_selector).next().is_some() {
+                        clone_is_done.store(true, Ordering::Release);
+                        return None;
+                    };
 
-                for (paste, url) in html
-                    .select(&links_selector)
-                    .filter(|e| e.text().collect::<String>() == ".torrent file only")
-                    .filter_map(|e| e.attr("href"))
+                    let links: Vec<_> = html
+                        .select(&links_selector)
+                        .filter(|e| e.text().collect::<String>() == ".torrent file only")
+                        .filter_map(|e| e.attr("href"))
+                        .map(str::to_string)
+                        .collect();
+
+                    Some(links)
+                })
+                .await
+                .unwrap();
+
+                let Some(links) = should_break else { break };
+
+                for (paste, url) in links
+                    .iter()
                     .filter_map(|url| Paste::parse_url(url).ok().map(|paste| (paste, url)))
                 {
-                    match paste.decrypt() {
+                    let Ok(cipher) = paste
+                        .request_async()
+                        .await
+                        .inspect_err(|e| error!("{url}: {e}"))
+                    else {
+                        continue;
+                    };
+
+                    match paste.decrypt(cipher) {
                         Ok(Attachment {
                             attachment,
                             attachment_name,
@@ -129,8 +152,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                             else {
                                 continue;
                             };
-                            let output = Path::new(OUTPUT_DIR).join(attachment_name);
+                            let output = Path::new(OUTPUT_DIR).join(&attachment_name);
                             let _ = fs::write(output, torrent);
+                            info!("saved {attachment_name}");
                         }
                         Err(fitgirl_decrypt::Error::JSONSerialize(_)) => {
                             error!("{url}: attachment is missing");
@@ -151,20 +175,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     drop(tx_text);
     drop(rx);
 
-    let _is_done = is_done.clone();
-    let wait = async move {
-        loop {
-            tokio::time::sleep(Duration::from_millis(1000)).await;
-            if is_done.load(Ordering::Acquire) {
-                break;
-            }
-        }
-    };
-
-    tokio::select! {
-        _ = joinset.join_all() => {}
-        _ = wait => {}
-    }
+    joinset.join_all().await;
 
     Ok(())
 }
