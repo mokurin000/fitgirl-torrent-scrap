@@ -5,7 +5,7 @@ use tracing::{error, info};
 
 use crate::OUTPUT_DIR;
 
-pub async fn extract_paste_links(links: Vec<String>) {
+pub(crate) async fn save_torrent_files(links: Vec<String>) {
     for (paste, url) in links
         .iter()
         .filter_map(|url| Paste::parse_url(url).ok().map(|paste| (paste, url)))

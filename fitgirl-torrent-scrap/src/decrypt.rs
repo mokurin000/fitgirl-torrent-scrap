@@ -7,7 +7,7 @@ use kanal::Receiver;
 use scraper::Selector;
 use tokio::task::spawn_blocking;
 
-use crate::extract::extract_paste_links;
+use crate::extract::save_torrent_files;
 
 pub async fn download_worker(rx_html: Receiver<String>, is_done: Arc<AtomicBool>) {
     while let Ok(text) = rx_html.recv() {
@@ -37,7 +37,7 @@ pub async fn download_worker(rx_html: Receiver<String>, is_done: Arc<AtomicBool>
 
         let Some(links) = links else { continue };
 
-        extract_paste_links(links).await;
+        save_torrent_files(links).await;
 
         if is_done.load(Ordering::Acquire) {
             break;
