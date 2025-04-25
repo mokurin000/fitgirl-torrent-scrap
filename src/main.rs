@@ -2,13 +2,17 @@ use std::{
     error::Error,
     fs,
     path::Path,
-    sync::{Arc, atomic::AtomicBool},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicU16},
+    },
 };
 
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine};
 use scraper::Selector;
 
 const FETCH_WORKERS: usize = 5;
+const DECRYPT_WORKERS: usize = 5;
 const OUTPUT_DIR: &str = "./output/";
 
 #[tokio::main]
@@ -16,15 +20,28 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     fs::create_dir_all(OUTPUT_DIR)?;
 
     let (tx, rx) = kanal::bounded_async(FETCH_WORKERS);
-    let (tx_text, rx_text) = kanal::bounded(num_cpus::get());
+    let (tx_text, rx_text) = kanal::bounded(DECRYPT_WORKERS);
     let is_done = Arc::new(AtomicBool::new(false));
+    let current_page = Arc::new(AtomicU16::new(1));
 
     let _is_done = is_done.clone();
+    let _current_page = current_page.clone();
+    ctrlc::set_handler(move || {
+        println!(
+            "current_page: {}",
+            _current_page.load(std::sync::atomic::Ordering::Acquire)
+        );
+        _is_done.store(true, std::sync::atomic::Ordering::Release);
+    })?;
+
+    let _is_done = is_done.clone();
+    let _current_page = current_page.clone();
     tokio::spawn(async move {
         for i in 1..=u16::MAX {
             if _is_done.load(std::sync::atomic::Ordering::Acquire) {
                 break;
             }
+            _current_page.store(i, std::sync::atomic::Ordering::Release);
             let _ = tx.send(i).await;
         }
     });
@@ -48,7 +65,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         });
     }
 
-    for _ in 0..num_cpus::get() {
+    for _ in 0..DECRYPT_WORKERS {
         let rx_text = rx_text.clone();
         let _is_done = is_done.clone();
 
