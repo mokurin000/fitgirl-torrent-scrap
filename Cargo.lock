@@ -523,7 +523,8 @@ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 [[package]]
 name = "fitgirl-decrypt"
 version = "0.2.0"
-source = "git+https://github.com/mokurin000/fitgirl-decrypt#f8427a12ea631a77a6a6852fc67dc643c644c7e9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "188f6fe3379f94c0229d23ab776453a6d25d2e448094fce66b2cc0a2c827de09"
 dependencies = [
  "aes-gcm",
  "base64",
