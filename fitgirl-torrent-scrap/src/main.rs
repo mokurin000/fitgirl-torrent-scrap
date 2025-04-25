@@ -87,7 +87,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                 };
 
                 let _ = tx_text.send(text).await;
-                info!("processed {page}");
+                info!("processed page {page}");
             }
         });
     }
