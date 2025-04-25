@@ -34,6 +34,9 @@ pub(crate) async fn save_torrent_files(links: Vec<String>) {
                     continue;
                 };
                 let output = Path::new(OUTPUT_DIR).join(&attachment_name);
+                if output.exists() {
+                    continue;
+                }
                 let _ = fs::write(output, torrent);
                 info!("saved {attachment_name}");
             }
