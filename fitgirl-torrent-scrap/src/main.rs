@@ -23,9 +23,14 @@ struct Args {
     /// scrape from this page num. page 0 is treated as page 1.
     #[argh(option, default = "1")]
     start_page: u16,
+
     /// scrape to this page num.
     #[argh(option, default = "u16::MAX")]
     end_page: u16,
+
+    /// skip adult contents
+    #[argh(option, default = "false")]
+    skip_adult: bool,
 }
 
 #[tokio::main]
@@ -33,6 +38,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let Args {
         start_page,
         end_page,
+        skip_adult,
     } = argh::from_env();
 
     fs::create_dir_all(OUTPUT_DIR)?;
@@ -89,7 +95,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         let rx_html = rx_html.clone();
         let is_done = is_done.clone();
 
-        joinset.spawn(download_worker(rx_html, is_done));
+        joinset.spawn(download_worker(rx_html, is_done, skip_adult));
     }
 
     drop(tx_html);

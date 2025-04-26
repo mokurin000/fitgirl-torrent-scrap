@@ -9,12 +9,17 @@ use tokio::task::spawn_blocking;
 
 use crate::decrypt_torrents::save_torrent_files;
 
-pub async fn download_worker(rx_html: Receiver<String>, is_done: Arc<AtomicBool>) {
+pub async fn download_worker(
+    rx_html: Receiver<String>,
+    is_done: Arc<AtomicBool>,
+    skip_adult: bool,
+) {
     while let Ok(text) = rx_html.recv() {
         let clone_is_done = is_done.clone();
         let links = spawn_blocking(move || {
             let html = scraper::Html::parse_document(&text);
 
+            let article_selector = Selector::parse("article").expect("invalid selector");
             let links_selector = Selector::parse("a").expect("invalid selector");
             let page_end_selector = Selector::parse("h1.page-title").expect("invalid selector");
 
@@ -23,12 +28,38 @@ pub async fn download_worker(rx_html: Receiver<String>, is_done: Arc<AtomicBool>
                 return None;
             };
 
-            let links: Vec<_> = html
-                .select(&links_selector)
-                .filter(|e| e.text().collect::<String>() == ".torrent file only")
-                .filter_map(|e| e.attr("href"))
-                .filter(|s| !s.contains("sendfile.su"))
-                .map(str::to_string)
+            let articles = html.select(&article_selector);
+
+            let links: Vec<_> = articles
+                .map(|article| {
+                    let tags = Selector::parse("div > p > strong").expect("invalid selector");
+                    let title = Selector::parse("header > h1 > a").expect("invalid selector");
+
+                    if skip_adult
+                        && article.select(&title).next().is_some_and(|title| {
+                            title.text().next().is_some_and(|t| t.contains("Adult"))
+                        })
+                    {
+                        return vec![];
+                    }
+                    if skip_adult
+                        && article
+                            .select(&tags)
+                            .next()
+                            .is_some_and(|t| t.text().next().is_some_and(|t| t.contains("Adult")))
+                    {
+                        return vec![];
+                    }
+
+                    article
+                        .select(&links_selector)
+                        .filter(|e| e.text().collect::<String>() == ".torrent file only")
+                        .filter_map(|e| e.attr("href"))
+                        .filter(|s| !s.contains("sendfile.su"))
+                        .map(str::to_string)
+                        .collect()
+                })
+                .flatten()
                 .collect();
 
             Some(links)
