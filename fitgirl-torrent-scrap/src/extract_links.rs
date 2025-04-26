@@ -1,18 +1,22 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, Ordering},
+use std::{
+    path::PathBuf,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use kanal::Receiver;
 use scraper::Selector;
 use tokio::task::spawn_blocking;
 
-use crate::decrypt_torrents::save_torrent_files;
+use crate::{FilterType, decrypt_torrents::save_torrent_files};
 
 pub async fn download_worker(
     rx_html: Receiver<String>,
     is_done: Arc<AtomicBool>,
-    skip_adult: bool,
+    filter: FilterType,
+    save_dir: PathBuf,
 ) {
     while let Ok(text) = rx_html.recv() {
         let clone_is_done = is_done.clone();
@@ -35,20 +39,17 @@ pub async fn download_worker(
                     let tags = Selector::parse("div > p > strong").expect("invalid selector");
                     let title = Selector::parse("header > h1 > a").expect("invalid selector");
 
-                    if skip_adult
-                        && article.select(&title).next().is_some_and(|title| {
-                            title.text().next().is_some_and(|t| t.contains("Adult"))
-                        })
-                    {
-                        return vec![];
-                    }
-                    if skip_adult
-                        && article
-                            .select(&tags)
-                            .next()
-                            .is_some_and(|t| t.text().next().is_some_and(|t| t.contains("Adult")))
-                    {
-                        return vec![];
+                    let is_adult = article.select(&title).next().is_some_and(|title| {
+                        title.text().next().is_some_and(|t| t.contains("Adult"))
+                    }) || article
+                        .select(&tags)
+                        .next()
+                        .is_some_and(|t| t.text().next().is_some_and(|t| t.contains("Adult")));
+
+                    match filter {
+                        FilterType::AdultOnly if !is_adult => return vec![],
+                        FilterType::NoAdult if is_adult => return vec![],
+                        _ => (),
                     }
 
                     article
@@ -69,7 +70,7 @@ pub async fn download_worker(
 
         let Some(links) = links else { continue };
 
-        save_torrent_files(links).await;
+        save_torrent_files(links, &save_dir).await;
 
         if is_done.load(Ordering::Acquire) {
             break;

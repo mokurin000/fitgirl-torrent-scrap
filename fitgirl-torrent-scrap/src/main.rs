@@ -1,6 +1,8 @@
 use std::{
     error::Error,
     fs,
+    num::NonZero,
+    path::PathBuf,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -11,7 +13,7 @@ use tracing::{level_filters::LevelFilter, warn};
 use tracing_subscriber::EnvFilter;
 
 use fitgirl_torrent_scrap::{
-    DECRYPT_WORKERS, FETCH_WORKERS, OUTPUT_DIR, extract_links::download_worker, fetch::fetch_worker,
+    DECRYPT_WORKERS, FETCH_WORKERS, FilterType, extract_links::download_worker, fetch::fetch_worker,
 };
 
 #[derive(argh::FromArgs)]
@@ -20,17 +22,23 @@ use fitgirl_torrent_scrap::{
     description = "Scraper for torrents from fitgirl-repacks.site"
 )]
 struct Args {
-    /// scrape from this page num. page 0 is treated as page 1.
-    #[argh(option, default = "1")]
-    start_page: u16,
+    /// scrape from this page num.
+    #[argh(option, default = "NonZero::new(1).unwrap()")]
+    start_page: NonZero<u16>,
 
     /// scrape to this page num.
-    #[argh(option, default = "u16::MAX")]
-    end_page: u16,
+    #[argh(option, default = "NonZero::new(u16::MAX).unwrap()")]
+    end_page: NonZero<u16>,
 
-    /// skip adult contents
-    #[argh(switch)]
-    skip_adult: bool,
+    /// filter scraped contents.
+    ///
+    /// Avaliable options: adult-only, no-adult, none (default)
+    #[argh(option, default = "FilterType::None")]
+    filter: FilterType,
+
+    /// directory to save torrents.
+    #[argh(option, default = "PathBuf::from(\"./output\")")]
+    save_dir: PathBuf,
 }
 
 #[tokio::main]
@@ -38,10 +46,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let Args {
         start_page,
         end_page,
-        skip_adult,
+        filter,
+        save_dir,
     } = argh::from_env();
 
-    fs::create_dir_all(OUTPUT_DIR)?;
+    fs::create_dir_all(&save_dir)?;
     nyquest_preset::register();
 
     tracing_subscriber::FmtSubscriber::builder()
@@ -68,7 +77,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let _is_done = is_done.clone();
     tokio::spawn(async move {
-        for page in start_page..=end_page {
+        for page in start_page.into()..=end_page.into() {
             if _is_done.load(Ordering::Acquire) {
                 let _ = tx.close();
                 break;
@@ -95,7 +104,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         let rx_html = rx_html.clone();
         let is_done = is_done.clone();
 
-        joinset.spawn(download_worker(rx_html, is_done, skip_adult));
+        joinset.spawn(download_worker(rx_html, is_done, filter, save_dir.clone()));
     }
 
     drop(tx_html);

@@ -3,9 +3,7 @@ use std::{fs, path::Path};
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine as _};
 use tracing::{debug, error, info};
 
-use crate::OUTPUT_DIR;
-
-pub(crate) async fn save_torrent_files(links: Vec<String>) {
+pub(crate) async fn save_torrent_files(links: Vec<String>, save_dir: impl AsRef<Path>) {
     for (paste, url) in links
         .iter()
         .filter_map(|url| Paste::parse_url(url).ok().map(|paste| (paste, url)))
@@ -33,7 +31,7 @@ pub(crate) async fn save_torrent_files(links: Vec<String>) {
                 else {
                     continue;
                 };
-                let output = Path::new(OUTPUT_DIR).join(&attachment_name);
+                let output = save_dir.as_ref().join(&attachment_name);
                 if output.exists() {
                     debug!("skipped existing {}", output.to_string_lossy());
                     continue;

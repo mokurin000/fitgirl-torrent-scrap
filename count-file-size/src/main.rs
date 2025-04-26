@@ -8,7 +8,10 @@ use librqbit_buffers::ByteBuf;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 #[derive(argh::FromArgs)]
-#[argh(description = "count file size from torrent metainfo")]
+#[argh(
+    help_triggers("-h", "--help"),
+    description = "count file size from torrent metainfo"
+)]
 struct Args {
     #[argh(positional)]
     torrent_paths: Vec<PathBuf>,
