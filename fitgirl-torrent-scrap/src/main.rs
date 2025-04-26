@@ -29,7 +29,7 @@ struct Args {
     end_page: u16,
 
     /// skip adult contents
-    #[argh(option, default = "false")]
+    #[argh(switch)]
     skip_adult: bool,
 }
 
