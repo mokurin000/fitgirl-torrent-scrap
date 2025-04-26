@@ -1,4 +1,4 @@
-# fitgirl-torrent-scrap
+# fitgirl-torrent-scrape
 
 Scraper for fitgirl torrents, written in Rust.
 
