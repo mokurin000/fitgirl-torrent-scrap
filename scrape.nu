@@ -1,3 +1,2 @@
-$env.RUST_LOG = "fitgirl_torrent_scrap=DEBUG"
-^cargo r -r --bin fitgirl-torrent-scrap -- --start-page 1 --filter adult-only --save-dir output/adult
-^cargo r -r --bin fitgirl-torrent-scrap -- --start-page 1 --filter no-adult --save-dir output/other
+^cargo r -r --bin fitgirl-torrent-scrap -- --start-page 1 --save-dir output/adult --filter adult-only
+^cargo r -r --bin fitgirl-torrent-scrap -- --start-page 1 --save-dir output/other --filter no-adult
