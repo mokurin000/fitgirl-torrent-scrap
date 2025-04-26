@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine as _};
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use crate::OUTPUT_DIR;
 
@@ -35,6 +35,7 @@ pub(crate) async fn save_torrent_files(links: Vec<String>) {
                 };
                 let output = Path::new(OUTPUT_DIR).join(&attachment_name);
                 if output.exists() {
+                    debug!("skipped existing {}", output.to_string_lossy());
                     continue;
                 }
                 let _ = fs::write(output, torrent);
