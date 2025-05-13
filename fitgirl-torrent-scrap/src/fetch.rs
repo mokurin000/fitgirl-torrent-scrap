@@ -1,7 +1,7 @@
 use kanal::{AsyncReceiver, AsyncSender};
 use nyquest::{AsyncClient, r#async::Request};
 
-use tracing::info;
+use spdlog::info;
 
 pub async fn fetch_worker(
     page_rx: AsyncReceiver<u16>,

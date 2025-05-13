@@ -9,12 +9,10 @@ use std::{
     },
 };
 
-use tracing::{level_filters::LevelFilter, warn};
-use tracing_subscriber::EnvFilter;
-
 use fitgirl_torrent_scrap::{
     DECRYPT_WORKERS, FETCH_WORKERS, FilterType, extract_links::download_worker, fetch::fetch_worker,
 };
+use spdlog::warn;
 
 #[derive(argh::FromArgs)]
 #[argh(
@@ -52,14 +50,6 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     fs::create_dir_all(&save_dir)?;
     nyquest_preset::register();
-
-    tracing_subscriber::FmtSubscriber::builder()
-        .with_env_filter(
-            EnvFilter::builder()
-                .with_default_directive(LevelFilter::INFO.into())
-                .from_env_lossy(),
-        )
-        .init();
 
     let (tx, rx) = kanal::bounded_async(FETCH_WORKERS);
     let (tx_html, rx_html) = kanal::bounded(DECRYPT_WORKERS);

@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine as _};
-use tracing::{debug, error, info};
+use spdlog::{debug, error, info};
 
 pub(crate) async fn save_torrent_files(links: Vec<String>, save_dir: impl AsRef<Path>) {
     for (paste, url) in links
