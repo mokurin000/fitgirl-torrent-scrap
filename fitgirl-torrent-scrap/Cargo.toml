@@ -8,19 +8,12 @@ license = "MIT"
 ctrlc = "3.4.6"
 kanal = "0.1.1"
 num_cpus = "1.16.0"
-fitgirl-decrypt = { version = "0.2.0", default-features = false, features = [
-    "reqwest",
+fitgirl-decrypt = { version = "0.3.5", default-features = false, features = [
+    "nyquest",
 ] }
 
-nyquest = { git = "https://github.com/bdbai/nyquest", version = "0.0.1-alpha.2", features = [
-    "multipart",
-    "async",
-] }
-nyquest-preset = { git = "https://github.com/bdbai/nyquest", version = "0.0.1-alpha.1", features = [
-    "multipart",
-    "async",
-] }
-
+nyquest = { version = "0.1.1", features = ["multipart", "async"] }
+nyquest-preset = { version = "0.1.0", features = ["multipart", "async"] }
 
 scraper = "0.23.1"
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }

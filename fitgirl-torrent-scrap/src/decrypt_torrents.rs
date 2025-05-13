@@ -9,7 +9,7 @@ pub(crate) async fn save_torrent_files(links: Vec<String>, save_dir: impl AsRef<
         .filter_map(|url| Paste::parse_url(url).ok().map(|paste| (paste, url)))
     {
         let Ok(cipher) = paste
-            .request_async()
+            .request_async_ny()
             .await
             .inspect_err(|e| error!("{url}: {e}"))
         else {
