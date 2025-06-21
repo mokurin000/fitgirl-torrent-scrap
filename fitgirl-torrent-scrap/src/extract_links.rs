@@ -36,15 +36,16 @@ pub async fn download_worker(
 
             let links: Vec<_> = articles
                 .map(|article| {
-                    let tags = Selector::parse("div > p > strong").expect("invalid selector");
-                    let title = Selector::parse("header > h1 > a").expect("invalid selector");
+                    let tags =
+                        Selector::parse("div.entry-content > p > a").expect("invalid selector");
+                    let title =
+                        Selector::parse("header > h1.entry-title > a").expect("invalid selector");
 
                     let is_adult = article.select(&title).next().is_some_and(|title| {
                         title.text().next().is_some_and(|t| t.contains("Adult"))
                     }) || article
                         .select(&tags)
-                        .next()
-                        .is_some_and(|t| t.text().next().is_some_and(|t| t.contains("Adult")));
+                        .any(|t| t.text().collect::<String>().contains("Adult"));
 
                     match filter {
                         FilterType::AdultOnly if !is_adult => return vec![],
