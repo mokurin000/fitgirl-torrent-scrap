@@ -36,8 +36,8 @@ pub async fn download_worker(
 
             let links: Vec<_> = articles
                 .map(|article| {
-                    let tags =
-                        Selector::parse("div.entry-content > p > a").expect("invalid selector");
+                    let tags = Selector::parse("div.entry-content > p > a:not(:first-child)")
+                        .expect("invalid selector");
                     let title =
                         Selector::parse("header > h1.entry-title > a").expect("invalid selector");
 
