@@ -1,5 +1,10 @@
 [workspace]
-members = ["fitgirl-torrent-scrap", "count-file-size", "db-helper"]
+members = [
+    "fitgirl-torrent-scrap",
+    "count-file-size",
+    "db-helper",
+    "export-excel",
+]
 resolver = "2"
 
 [profile.release]

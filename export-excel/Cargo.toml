@@ -1,0 +1,10 @@
+[package]
+name = "export-excel"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+db-helper = { workspace = true }
+
+polars = "0.48.1"
+polars_excel_writer = { version = "0.15.1", features = ["zlib"] }

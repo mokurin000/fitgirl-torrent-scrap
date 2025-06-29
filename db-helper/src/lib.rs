@@ -38,7 +38,7 @@ pub fn add_game(
     Ok(())
 }
 
-const TABLE: TableDefinition<String, String> = TableDefinition::new("games");
+pub const TABLE: TableDefinition<String, String> = TableDefinition::new("games");
 static DATABASE: LazyLock<Database> = LazyLock::new(|| {
     let mut db = Database::create("game.redb").expect("failed to open database!");
     _ = db.upgrade(); // try to update DB
@@ -52,6 +52,6 @@ static DATABASE: LazyLock<Database> = LazyLock::new(|| {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Record {
-    title: String,
-    torrent: String,
+    pub title: String,
+    pub torrent: String,
 }
