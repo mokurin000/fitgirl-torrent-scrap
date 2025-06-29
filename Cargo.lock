@@ -906,15 +906,15 @@ checksum = "f8eb564c5c7423d25c886fb561d1e4ee69f72354d16918afa32c08811f6b6a55"
 
 [[package]]
 name = "fitgirl-decrypt"
-version = "0.3.5"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab7938539065115d3b668a8919382ce3c4da1be93c256f96bbd568b69e224419"
+checksum = "a09863b7179464dd2167fe8ae4223c6bf9973cb28f8ead1c14a40c242d5ee6af"
 dependencies = [
  "aes-gcm",
  "base64",
  "bs58",
  "miniz_oxide",
- "nyquest 0.1.1",
+ "nyquest",
  "ring",
  "serde",
  "serde_json",
@@ -932,7 +932,7 @@ dependencies = [
  "fitgirl-decrypt",
  "kanal",
  "num_cpus",
- "nyquest 0.2.0",
+ "nyquest",
  "nyquest-preset",
  "scraper",
  "spdlog-rs",
@@ -1963,23 +1963,13 @@ dependencies = [
 
 [[package]]
 name = "nyquest"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a4722c65afdcbb836197802c2f5dc050825964bebbd9802086e54aef39208b0"
-dependencies = [
- "nyquest-interface 0.1.0",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
-]
-
-[[package]]
-name = "nyquest"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c85e59c79cb09743897025eedd9fa912c213194d3af0fd39ddd917d4eb5a0536"
 dependencies = [
- "nyquest-interface 0.2.0",
+ "nyquest-interface",
+ "serde",
+ "serde_json",
  "thiserror 2.0.12",
 ]
 
@@ -1993,7 +1983,7 @@ dependencies = [
  "curl-sys",
  "futures-channel",
  "futures-util",
- "nyquest-interface 0.2.0",
+ "nyquest-interface",
  "slab",
 ]
 
@@ -2007,7 +1997,7 @@ dependencies = [
  "block2",
  "cfg-if",
  "futures-util",
- "nyquest-interface 0.2.0",
+ "nyquest-interface",
  "objc2",
  "objc2-core-foundation",
  "objc2-foundation",
@@ -2021,23 +2011,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a58b68b43032fb9cb72368fba2fc14d7908bfeaa775a8fed9dc0e324f4e09702"
 dependencies = [
  "cfg-if",
- "nyquest-interface 0.2.0",
+ "nyquest-interface",
  "windows 0.61.1",
  "windows-collections",
  "windows-core 0.61.0",
  "windows-future",
-]
-
-[[package]]
-name = "nyquest-interface"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afabf0928178a75d8ded690f55faba7aa69d2998d4d8acca9c6ca4ac879c859d"
-dependencies = [
- "cfg-if",
- "futures-core",
- "futures-io",
- "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -2059,7 +2037,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c5bf587b4df60b547f19268bb3d423eabd835a72b157707a0139c0dd403db2f"
 dependencies = [
  "cfg-if",
- "nyquest 0.2.0",
+ "nyquest",
  "nyquest-backend-curl",
  "nyquest-backend-nsurlsession",
  "nyquest-backend-winrt",
