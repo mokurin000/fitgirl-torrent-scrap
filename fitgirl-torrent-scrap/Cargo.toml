@@ -5,6 +5,8 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
+db-helper = { workspace = true }
+
 ctrlc = "3.4.6"
 kanal = "0.1.1"
 num_cpus = "1.16.0"
@@ -12,8 +14,8 @@ fitgirl-decrypt = { version = "0.3.5", default-features = false, features = [
     "nyquest",
 ] }
 
-nyquest = { version = "0.1.1", features = ["multipart", "async"] }
-nyquest-preset = { version = "0.1.0", features = ["multipart", "async"] }
+nyquest = { version = "0.2.0", features = ["multipart", "async"] }
+nyquest-preset = { version = "0.2.0", features = ["multipart", "async"] }
 
 scraper = "0.23.1"
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }
@@ -23,4 +25,3 @@ spdlog-rs = { version = "0.4.3", features = [
     "level-info",
     "release-level-info",
 ] }
-redb = "2.6.0"

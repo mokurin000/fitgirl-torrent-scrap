@@ -1,5 +1,5 @@
 [workspace]
-members = ["fitgirl-torrent-scrap", "count-file-size"]
+members = ["fitgirl-torrent-scrap", "count-file-size", "db-helper"]
 resolver = "2"
 
 [profile.release]
@@ -7,3 +7,6 @@ codegen-units = 1
 opt-level = "s"
 lto = true
 strip = true
+
+[workspace.dependencies]
+db-helper = { path = "./db-helper" }

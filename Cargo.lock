@@ -415,6 +415,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
 
 [[package]]
+name = "db-helper"
+version = "0.1.0"
+dependencies = [
+ "redb",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -444,6 +451,16 @@ dependencies = [
  "option-ext",
  "redox_users",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "dispatch2"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89a09f22a6c6069a18470eb92d2298acf25463f14256d24778e1230d789a2aec"
+dependencies = [
+ "bitflags",
+ "objc2",
 ]
 
 [[package]]
@@ -500,7 +517,7 @@ dependencies = [
  "base64",
  "bs58",
  "miniz_oxide",
- "nyquest",
+ "nyquest 0.1.1",
  "ring",
  "serde",
  "serde_json",
@@ -514,12 +531,12 @@ version = "0.1.0"
 dependencies = [
  "argh",
  "ctrlc",
+ "db-helper",
  "fitgirl-decrypt",
  "kanal",
  "num_cpus",
- "nyquest",
+ "nyquest 0.2.0",
  "nyquest-preset",
- "redb",
  "scraper",
  "spdlog-rs",
  "strum 0.27.1",
@@ -1184,51 +1201,61 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a4722c65afdcbb836197802c2f5dc050825964bebbd9802086e54aef39208b0"
 dependencies = [
- "nyquest-interface",
+ "nyquest-interface 0.1.0",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
 ]
 
 [[package]]
-name = "nyquest-backend-curl"
-version = "0.1.0"
+name = "nyquest"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33755d84d0462bf7f524d9855329b65c11408ed1a99da29ec0853cb4ad6a6e63"
+checksum = "c85e59c79cb09743897025eedd9fa912c213194d3af0fd39ddd917d4eb5a0536"
+dependencies = [
+ "nyquest-interface 0.2.0",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "nyquest-backend-curl"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "87593408667ab2223d4f43423332083e89a37ca3b690630c3eaf1815cad97b19"
 dependencies = [
  "curl",
  "curl-sys",
  "futures-channel",
  "futures-util",
- "memchr",
- "nyquest-interface",
+ "nyquest-interface 0.2.0",
  "slab",
 ]
 
 [[package]]
 name = "nyquest-backend-nsurlsession"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b67fcff4b4b16208e87f1ab96aa4a2d19ee4c52e8bb5aaff9eb2c17c7dd4f640"
+checksum = "5ef67dabd097e0e48c4db4743ba8875f73dcede855b41c29b046be25b14fcb13"
 dependencies = [
  "arc-swap",
  "block2",
  "cfg-if",
  "futures-util",
- "nyquest-interface",
+ "nyquest-interface 0.2.0",
  "objc2",
  "objc2-core-foundation",
  "objc2-foundation",
+ "objc2-security",
 ]
 
 [[package]]
 name = "nyquest-backend-winrt"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6252715c7ef065cdb3384bc7551195dd97cc509ea0db25570b2ae1e28b765552"
+checksum = "a58b68b43032fb9cb72368fba2fc14d7908bfeaa775a8fed9dc0e324f4e09702"
 dependencies = [
  "cfg-if",
- "nyquest-interface",
+ "nyquest-interface 0.2.0",
  "windows",
  "windows-collections",
  "windows-core",
@@ -1248,13 +1275,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "nyquest-preset"
-version = "0.1.0"
+name = "nyquest-interface"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d608db341e4b68e5db12bd1befac46786d69ef39c682e47a0795edac9d574be1"
+checksum = "2fa05badba985a2986a4c6783665881cfaebdcc1f91814f9ee8518838c0483ff"
 dependencies = [
  "cfg-if",
- "nyquest",
+ "futures-core",
+ "futures-io",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "nyquest-preset"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c5bf587b4df60b547f19268bb3d423eabd835a72b157707a0139c0dd403db2f"
+dependencies = [
+ "cfg-if",
+ "nyquest 0.2.0",
  "nyquest-backend-curl",
  "nyquest-backend-nsurlsession",
  "nyquest-backend-winrt",
@@ -1276,6 +1315,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c10c2894a6fed806ade6027bcd50662746363a9589d3ec9d9bef30a4e4bc166"
 dependencies = [
  "bitflags",
+ "dispatch2",
+ "objc2",
 ]
 
 [[package]]
@@ -1293,6 +1334,17 @@ dependencies = [
  "bitflags",
  "block2",
  "objc2",
+]
+
+[[package]]
+name = "objc2-security"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1f8e0ef3ab66b08c42644dcb34dba6ec0a574bbd8adbb8bdbdc7a2779731a44"
+dependencies = [
+ "bitflags",
+ "objc2",
+ "objc2-core-foundation",
 ]
 
 [[package]]

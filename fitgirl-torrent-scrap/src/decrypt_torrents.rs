@@ -5,8 +5,8 @@ use spdlog::{debug, error, info};
 
 use crate::{
     Game,
-    db::{add_game, query_game, read_transac, write_transac},
 };
+use db_helper::{add_game, query_game, read_transac, write_transac};
 
 pub(crate) async fn save_torrent_files(
     games: Vec<Game>,
