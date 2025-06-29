@@ -8,9 +8,10 @@ use std::{
 
 use kanal::Receiver;
 use scraper::Selector;
+use spdlog::error;
 use tokio::task::spawn_blocking;
 
-use crate::{FilterType, decrypt_torrents::save_torrent_files};
+use crate::{FilterType, Game, decrypt_torrents::save_torrent_files};
 
 pub async fn download_worker(
     rx_html: Receiver<String>,
@@ -35,21 +36,25 @@ pub async fn download_worker(
             let articles = html.select(&article_selector);
 
             let links: Vec<_> = articles
-                .map(|article| {
+                .filter_map(|article| {
                     let tags = Selector::parse("div.entry-content > p > a:not(:first-child)")
                         .expect("invalid selector");
                     let title =
                         Selector::parse("header > h1.entry-title > a").expect("invalid selector");
+                    let title = article
+                        .select(&title)
+                        .next()
+                        .map(|t| t.text().next())
+                        .flatten()?;
 
-                    let is_adult = article.select(&title).next().is_some_and(|title| {
-                        title.text().next().is_some_and(|t| t.contains("Adult"))
-                    }) || article
-                        .select(&tags)
-                        .any(|t| t.text().collect::<String>().contains("Adult"));
+                    let is_adult = title.to_lowercase().contains("adult")
+                        || article
+                            .select(&tags)
+                            .any(|t| t.text().collect::<String>().contains("Adult"));
 
                     match filter {
-                        FilterType::AdultOnly if !is_adult => return vec![],
-                        FilterType::NoAdult if is_adult => return vec![],
+                        FilterType::AdultOnly if !is_adult => return None,
+                        FilterType::NoAdult if is_adult => return None,
                         _ => (),
                     }
 
@@ -59,9 +64,12 @@ pub async fn download_worker(
                         .filter_map(|e| e.attr("href"))
                         .filter(|s| !s.contains("sendfile.su"))
                         .map(str::to_string)
-                        .collect()
+                        .next()
+                        .map(|paste_url| Game {
+                            paste_url,
+                            title: title.into(),
+                        })
                 })
-                .flatten()
                 .collect();
 
             Some(links)
@@ -71,7 +79,9 @@ pub async fn download_worker(
 
         let Some(links) = links else { continue };
 
-        save_torrent_files(links, &save_dir).await;
+        if let Err(e) = save_torrent_files(links, &save_dir).await {
+            error!("failed to save torrent: {e}");
+        }
 
         if is_done.load(Ordering::Acquire) {
             break;

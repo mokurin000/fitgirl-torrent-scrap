@@ -519,6 +519,7 @@ dependencies = [
  "num_cpus",
  "nyquest",
  "nyquest-preset",
+ "redb",
  "scraper",
  "spdlog-rs",
  "strum 0.27.1",
@@ -1536,6 +1537,15 @@ checksum = "1465873a3dfdaa8ae7cb14b4383657caab0b3e8a0aa9ae8e04b044854c8dfce2"
 dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
+]
+
+[[package]]
+name = "redb"
+version = "2.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cef6a6d3a65ea334d6cdfb31fa2525c20184b7aa7bd1ad1e2e37502610d4609f"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
