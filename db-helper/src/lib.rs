@@ -1,6 +1,6 @@
 use std::sync::LazyLock;
 
-use redb::{Database, ReadTransaction, TableDefinition, WriteTransaction};
+use redb::{Database, ReadTransaction, ReadableTable, TableDefinition, WriteTransaction};
 
 pub fn read_transac() -> Result<ReadTransaction, redb::Error> {
     Ok(DATABASE.begin_read()?)
@@ -16,6 +16,16 @@ pub fn query_game(
 ) -> Result<Option<String>, redb::Error> {
     let result = tsx.open_table(TABLE)?.get(title.into())?;
     Ok(result.map(|g| g.value()))
+}
+
+pub fn list_games(
+    table: &impl ReadableTable<String, String>,
+) -> Result<impl Iterator<Item = Record>, redb::Error> {
+    Ok(table
+        .iter()?
+        .filter_map(Result::ok)
+        .map(|(title, torrent)| (title.value(), torrent.value()))
+        .map(|(title, torrent)| Record { title, torrent }))
 }
 
 pub fn add_game(
@@ -39,3 +49,9 @@ static DATABASE: LazyLock<Database> = LazyLock::new(|| {
     tsx.commit().expect("failed to init table!");
     db
 });
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Record {
+    title: String,
+    torrent: String,
+}
