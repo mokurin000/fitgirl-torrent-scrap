@@ -1,6 +1,9 @@
 use std::sync::LazyLock;
 
-use redb::{Database, ReadTransaction, ReadableTable, TableDefinition, WriteTransaction};
+use redb::{
+    Database, ReadTransaction, ReadableDatabase as _, ReadableTable, TableDefinition,
+    WriteTransaction,
+};
 
 pub fn read_transac() -> Result<ReadTransaction, redb::Error> {
     Ok(DATABASE.begin_read()?)
@@ -41,7 +44,6 @@ pub fn add_game(
 pub const TABLE: TableDefinition<String, String> = TableDefinition::new("games");
 static DATABASE: LazyLock<Database> = LazyLock::new(|| {
     let mut db = Database::create("game.redb").expect("failed to open database!");
-    _ = db.upgrade(); // try to update DB
     _ = db.compact();
 
     // create empty table if not existing
