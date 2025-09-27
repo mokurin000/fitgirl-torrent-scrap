@@ -6,5 +6,5 @@ edition = "2024"
 [dependencies]
 db-helper = { workspace = true }
 
-polars = "0.51.0"
+polars = { version = "0.51.0", default-features = false }
 polars_excel_writer = { version = "0.21.0", features = ["zlib"] }
