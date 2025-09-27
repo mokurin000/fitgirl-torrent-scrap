@@ -9,7 +9,7 @@ use std::{
 use chrono::NaiveDate;
 use kanal::Receiver;
 use scraper::Selector;
-use spdlog::{error, info};
+use spdlog::{debug, error};
 use tokio::task::spawn_blocking;
 
 use crate::{FilterType, Game, decrypt_torrents::save_torrent_files};
@@ -72,6 +72,7 @@ pub async fn download_worker(
                         .filter(|e| e.text().collect::<String>() == ".torrent file only")
                         .filter_map(|e| e.attr("href"))
                         .filter(|s| !s.contains("sendfile.su"))
+                        .filter(|s| !s.contains("announce"))
                         .map(str::to_string)
                         .next()
                         .map(|paste_url| Game {
@@ -79,7 +80,7 @@ pub async fn download_worker(
                             title: title.into(),
                             date,
                         })
-                        .inspect(|game| info!("scraped: {game:?}"))
+                        .inspect(|game| debug!("scraped: {game:?}"))
                 })
                 .collect();
 

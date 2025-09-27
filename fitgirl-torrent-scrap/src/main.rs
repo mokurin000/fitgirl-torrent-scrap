@@ -51,6 +51,11 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     fs::create_dir_all(&save_dir)?;
     nyquest_preset::register();
 
+    if cfg!(debug_assertions) {
+        spdlog::default_logger()
+            .set_level_filter(spdlog::LevelFilter::MoreSevereEqual(spdlog::Level::Debug));
+    }
+
     let (tx, rx) = kanal::bounded_async(FETCH_WORKERS);
     let (tx_html, rx_html) = kanal::bounded(DECRYPT_WORKERS);
     let is_done = Arc::new(AtomicBool::new(false));
