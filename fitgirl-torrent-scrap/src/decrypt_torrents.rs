@@ -2,7 +2,7 @@ use std::{error::Error, fs, path::Path, time::UNIX_EPOCH};
 
 use chrono::NaiveDate;
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine as _};
-use spdlog::{debug, error, info};
+use spdlog::{error, info};
 
 use crate::Game;
 use db_helper::{add_game, query_game, read_transac, write_transac};
@@ -16,23 +16,25 @@ pub(crate) async fn save_torrent_files(
     {
         let tsx = read_transac()?;
         for game in games {
-            if query_game(&tsx, &game.title)?
-                .and_then(|torrent_name| save_dir.join(torrent_name).metadata().ok())
-                .is_some_and(|meta| {
-                    meta.is_file()
-                        && meta.modified().is_ok_and(|time| {
-                            let Ok(time) = time.duration_since(UNIX_EPOCH) else {
-                                return false;
-                            };
-                            let days = time.as_secs() / (24 * 60 * 60);
-                            NaiveDate::from_epoch_days(days as _)
-                                .is_some_and(|store_date| game.date <= store_date)
-                        })
-                })
-            {
-                continue;
+            let torrent = query_game(&tsx, &game.title)?;
+            match torrent {
+                None => continue,
+                Some(torrent_name) => {
+                    if save_dir.join(torrent_name).metadata().is_ok_and(|meta| {
+                        meta.is_file()
+                            && meta.modified().is_ok_and(|time| {
+                                let Ok(time) = time.duration_since(UNIX_EPOCH) else {
+                                    return false;
+                                };
+                                let days = time.as_secs() / (24 * 60 * 60);
+                                NaiveDate::from_epoch_days(days as _)
+                                    .is_some_and(|store_date| game.date <= store_date)
+                            })
+                    }) {
+                        continue;
+                    }
+                }
             }
-
             filtered_games.push(game);
         }
     }
@@ -65,10 +67,6 @@ pub(crate) async fn save_torrent_files(
                 add_game(&tsx, title, &attachment_name)?;
 
                 let output = save_dir.join(&attachment_name);
-                if output.exists() {
-                    debug!("skipped existing {}", output.to_string_lossy());
-                    continue;
-                }
 
                 let Some(torrent) = attachment
                     .strip_prefix("data:application/x-bittorrent;base64,")

@@ -9,7 +9,7 @@ use std::{
 use chrono::NaiveDate;
 use kanal::Receiver;
 use scraper::Selector;
-use spdlog::error;
+use spdlog::{error, info};
 use tokio::task::spawn_blocking;
 
 use crate::{FilterType, Game, decrypt_torrents::save_torrent_files};
@@ -79,6 +79,7 @@ pub async fn download_worker(
                             title: title.into(),
                             date,
                         })
+                        .inspect(|game| info!("scraped: {game:?}"))
                 })
                 .collect();
 
