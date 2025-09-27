@@ -1,3 +1,5 @@
+use chrono::NaiveDate;
+
 pub mod decrypt_torrents;
 pub mod extract_links;
 pub mod fetch;
@@ -17,4 +19,5 @@ pub enum FilterType {
 pub struct Game {
     paste_url: String,
     title: String,
+    date: NaiveDate,
 }

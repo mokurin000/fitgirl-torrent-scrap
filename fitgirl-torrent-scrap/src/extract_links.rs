@@ -6,6 +6,7 @@ use std::{
     },
 };
 
+use chrono::NaiveDate;
 use kanal::Receiver;
 use scraper::Selector;
 use spdlog::error;
@@ -46,6 +47,14 @@ pub async fn download_worker(
                         .next()
                         .map(|t| t.text().next())
                         .flatten()?;
+                    let date = article
+                        .select(
+                            &Selector::parse(".entry-header > .entry-meta > .entry-date time")
+                                .expect("invalid selector"),
+                        )
+                        .next()
+                        .and_then(|elem| elem.text().next())?;
+                    let date = NaiveDate::parse_from_str(date, "%d/%m/%Y").ok()?;
 
                     let is_adult = title.to_lowercase().contains("adult")
                         || article
@@ -68,6 +77,7 @@ pub async fn download_worker(
                         .map(|paste_url| Game {
                             paste_url,
                             title: title.into(),
+                            date,
                         })
                 })
                 .collect();

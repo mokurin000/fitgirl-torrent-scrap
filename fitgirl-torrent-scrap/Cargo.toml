@@ -10,14 +10,14 @@ db-helper = { workspace = true }
 ctrlc = "3.4.6"
 kanal = "0.1.1"
 num_cpus = "1.16.0"
-fitgirl-decrypt = { version = "0.4.1", default-features = false, features = [
+fitgirl-decrypt = { version = "0.5.0", default-features = false, features = [
     "nyquest",
 ] }
 
-nyquest = { version = "0.2.0", features = ["multipart", "async"] }
-nyquest-preset = { version = "0.2.0", features = ["multipart", "async"] }
+nyquest = { version = "0.3.0", features = ["multipart", "async"] }
+nyquest-preset = { version = "0.3.0", features = ["multipart", "async"] }
 
-scraper = "0.23.1"
+scraper = "0.24.0"
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }
 argh = "0.1.13"
 strum = { version = "0.27.1", features = ["derive"] }
@@ -25,3 +25,4 @@ spdlog-rs = { version = "0.4.3", features = [
     "level-info",
     "release-level-info",
 ] }
+chrono = { version = "0.4.42", default-features = false }

@@ -42,6 +42,7 @@ pub const TABLE: TableDefinition<String, String> = TableDefinition::new("games")
 static DATABASE: LazyLock<Database> = LazyLock::new(|| {
     let mut db = Database::create("game.redb").expect("failed to open database!");
     _ = db.upgrade(); // try to update DB
+    _ = db.compact();
 
     // create empty table if not existing
     let tsx = db.begin_write().unwrap();

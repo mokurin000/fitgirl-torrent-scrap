@@ -1,11 +1,10 @@
-use std::{error::Error, fs, path::Path};
+use std::{error::Error, fs, path::Path, time::UNIX_EPOCH};
 
+use chrono::NaiveDate;
 use fitgirl_decrypt::{Attachment, Paste, base64::Engine as _};
 use spdlog::{debug, error, info};
 
-use crate::{
-    Game,
-};
+use crate::Game;
 use db_helper::{add_game, query_game, read_transac, write_transac};
 
 pub(crate) async fn save_torrent_files(
@@ -18,7 +17,18 @@ pub(crate) async fn save_torrent_files(
         let tsx = read_transac()?;
         for game in games {
             if query_game(&tsx, &game.title)?
-                .is_some_and(|torrent_name| save_dir.join(torrent_name).exists())
+                .and_then(|torrent_name| save_dir.join(torrent_name).metadata().ok())
+                .is_some_and(|meta| {
+                    meta.is_file()
+                        && meta.modified().is_ok_and(|time| {
+                            let Ok(time) = time.duration_since(UNIX_EPOCH) else {
+                                return false;
+                            };
+                            let days = time.as_secs() / (24 * 60 * 60);
+                            NaiveDate::from_epoch_days(days as _)
+                                .is_some_and(|store_date| game.date <= store_date)
+                        })
+                })
             {
                 continue;
             }
@@ -33,6 +43,7 @@ pub(crate) async fn save_torrent_files(
         Game {
             paste_url: url,
             title,
+            ..
         },
     ) in filtered_games
         .iter()
