@@ -23,6 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Column::new("torrent".into(), torrent),
     ];
     let df = DataFrame::new(columns)?;
+    let df = df.unique_stable(Some(&["torrent".into()]), UniqueKeepStrategy::Last, None)?;
 
     let mut writer = PolarsExcelWriter::new();
     writer.write_dataframe(&df)?;
