@@ -18,7 +18,6 @@ pub(crate) async fn save_torrent_files(
         for game in games {
             let torrent = query_game(&tsx, &game.title)?;
             match torrent {
-                None => continue,
                 Some(torrent_name) => {
                     if save_dir.join(torrent_name).metadata().is_ok_and(|meta| {
                         meta.is_file()
@@ -34,7 +33,9 @@ pub(crate) async fn save_torrent_files(
                         continue;
                     }
                 }
+                None => (),
             }
+
             filtered_games.push(game);
         }
     }

@@ -21,7 +21,7 @@ scraper = "0.24.0"
 tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }
 argh = "0.1.13"
 strum = { version = "0.27.1", features = ["derive"] }
-spdlog-rs = { version = "0.4.3", features = [
+spdlog-rs = { version = "0.5.1", features = [
     "level-debug",
     "release-level-info",
 ] }
