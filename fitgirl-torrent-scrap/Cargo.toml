@@ -17,8 +17,13 @@ fitgirl-decrypt = { version = "0.5.0", default-features = false, features = [
 nyquest = { version = "0.3.0", features = ["multipart", "async"] }
 nyquest-preset = { version = "0.3.0", features = ["multipart", "async"] }
 
-scraper = "0.24.0"
-tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "time"] }
+scraper = { version = "0.24.0", features = ["atomic"] }
+tokio = { version = "1.44.2", features = [
+    "macros",
+    "rt-multi-thread",
+    "time",
+    "fs",
+] }
 argh = "0.1.13"
 strum = { version = "0.27.1", features = ["derive"] }
 spdlog-rs = { version = "0.5.1", features = [
@@ -26,3 +31,4 @@ spdlog-rs = { version = "0.5.1", features = [
     "release-level-info",
 ] }
 chrono = { version = "0.4.42", default-features = false }
+bounded_join_set = "0.3.0"

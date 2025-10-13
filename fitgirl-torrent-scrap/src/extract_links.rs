@@ -7,32 +7,23 @@ use std::{
 };
 
 use chrono::NaiveDate;
-use kanal::Receiver;
-use scraper::Selector;
+use kanal::AsyncReceiver;
+use scraper::{Html, Selector};
 use spdlog::{debug, error};
-use tokio::task::spawn_blocking;
+use tokio::task;
 
 use crate::{FilterType, Game, decrypt_torrents::save_torrent_files};
 
 pub async fn download_worker(
-    rx_html: Receiver<String>,
+    rx_html: AsyncReceiver<Html>,
     is_done: Arc<AtomicBool>,
     filter: FilterType,
     save_dir: PathBuf,
 ) {
-    while let Ok(text) = rx_html.recv() {
-        let clone_is_done = is_done.clone();
-        let links = spawn_blocking(move || {
-            let html = scraper::Html::parse_document(&text);
-
+    while let Ok(html) = rx_html.recv().await {
+        let links = task::spawn_blocking(move || {
             let article_selector = Selector::parse("article").expect("invalid selector");
             let links_selector = Selector::parse("a").expect("invalid selector");
-            let page_end_selector = Selector::parse("h1.page-title").expect("invalid selector");
-
-            if html.select(&page_end_selector).next().is_some() {
-                clone_is_done.store(true, Ordering::Release);
-                return None;
-            };
 
             let articles = html.select(&article_selector);
 

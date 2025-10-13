@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     }
 
     let (tx, rx) = kanal::bounded_async(FETCH_WORKERS);
-    let (tx_html, rx_html) = kanal::bounded(DECRYPT_WORKERS);
+    let (tx_html, rx_html) = kanal::unbounded_async();
     let is_done = Arc::new(AtomicBool::new(false));
 
     let _is_done = is_done.clone();
@@ -67,6 +67,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
             std::process::exit(0);
         }
 
+        warn!("SIGINT received, about to exit...");
         _is_done.store(true, Ordering::Release);
     })?;
 
@@ -88,7 +89,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let mut joinset = tokio::task::JoinSet::new();
 
     for _ in 0..FETCH_WORKERS {
-        let tx_html = tx_html.as_async().clone();
+        let tx_html = tx_html.clone();
         let page_rx = rx.clone();
         let client = client.clone();
 

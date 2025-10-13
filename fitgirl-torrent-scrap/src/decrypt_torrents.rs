@@ -1,7 +1,8 @@
-use std::{error::Error, fs, path::Path, time::UNIX_EPOCH};
+use std::{error::Error, path::Path, time::UNIX_EPOCH};
+use tokio::{fs, task};
 
 use chrono::NaiveDate;
-use fitgirl_decrypt::{Attachment, Paste, base64::Engine as _};
+use fitgirl_decrypt::{Attachment, Paste, base64::Engine as _, decrypt_with_key};
 use spdlog::{error, info};
 
 use crate::Game;
@@ -60,7 +61,8 @@ pub(crate) async fn save_torrent_files(
             continue;
         };
 
-        match paste.decrypt(cipher) {
+        let master_key = paste.master_key().clone();
+        match task::spawn_blocking(move || decrypt_with_key(&master_key, cipher)).await? {
             Ok(Attachment {
                 attachment,
                 attachment_name,
@@ -80,7 +82,7 @@ pub(crate) async fn save_torrent_files(
                     continue;
                 };
 
-                let _ = fs::write(output, torrent);
+                let _ = fs::write(output, torrent).await;
                 info!("saved {attachment_name}");
             }
             Err(fitgirl_decrypt::Error::JSONSerialize(_)) => {
