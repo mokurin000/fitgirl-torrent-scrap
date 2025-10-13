@@ -84,7 +84,7 @@ pub async fn download_worker(
 
         let Some(links) = links else { continue };
 
-        if let Err(e) = save_torrent_files(links, &save_dir, &client).await {
+        if let Err(e) = save_torrent_files(links, &save_dir, &client, &is_done).await {
             error!("failed to save torrent: {e}");
         }
 

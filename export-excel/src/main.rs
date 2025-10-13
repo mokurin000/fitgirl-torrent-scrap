@@ -32,7 +32,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         Column::new("publish_date".into(), publish_date),
     ];
     let df = DataFrame::new(columns)?;
-    let df = df.unique_stable(Some(&["torrent".into()]), UniqueKeepStrategy::Last, None)?;
+    let mut df = df.unique_stable(Some(&["torrent".into()]), UniqueKeepStrategy::Last, None)?;
+    df.sort_in_place(
+        ["publish_date"],
+        SortMultipleOptions::new().with_order_descending(true),
+    )?;
 
     let mut writer = PolarsExcelWriter::new();
     writer.set_autofit(true);
