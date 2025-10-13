@@ -12,6 +12,7 @@ use std::{
 use fitgirl_torrent_scrap::{
     DECRYPT_WORKERS, FETCH_WORKERS, FilterType, extract_links::download_worker, fetch::fetch_worker,
 };
+use nyquest::ClientBuilder;
 use spdlog::warn;
 
 #[derive(argh::FromArgs)]
@@ -96,11 +97,18 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         joinset.spawn(fetch_worker(page_rx, client, tx_html));
     }
 
+    let client = ClientBuilder::default().build_async().await?;
     for _ in 0..DECRYPT_WORKERS {
         let rx_html = rx_html.clone();
         let is_done = is_done.clone();
 
-        joinset.spawn(download_worker(rx_html, is_done, filter, save_dir.clone()));
+        joinset.spawn(download_worker(
+            rx_html,
+            is_done,
+            filter,
+            save_dir.clone(),
+            client.clone(),
+        ));
     }
 
     drop(tx_html);

@@ -1,3 +1,4 @@
+use nyquest::AsyncClient;
 use std::{error::Error, path::Path, time::UNIX_EPOCH};
 use tokio::{fs, task};
 
@@ -11,6 +12,7 @@ use db_helper::{add_game, query_game, read_transac, write_transac};
 pub(crate) async fn save_torrent_files(
     games: Vec<Game>,
     save_dir: impl AsRef<Path>,
+    client: &AsyncClient,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let save_dir = save_dir.as_ref();
     let mut filtered_games = vec![];
@@ -54,7 +56,7 @@ pub(crate) async fn save_torrent_files(
         .filter_map(|g| Paste::parse_url(&g.paste_url).ok().map(|paste| (paste, g)))
     {
         let Ok(cipher) = paste
-            .request_async_ny()
+            .request_async_ny(client.clone())
             .await
             .inspect_err(|e| error!("{url}: {e}"))
         else {

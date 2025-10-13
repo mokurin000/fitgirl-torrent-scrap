@@ -8,6 +8,7 @@ use std::{
 
 use chrono::NaiveDate;
 use kanal::AsyncReceiver;
+use nyquest::AsyncClient;
 use scraper::{Html, Selector};
 use spdlog::{debug, error};
 use tokio::task;
@@ -19,6 +20,7 @@ pub async fn download_worker(
     is_done: Arc<AtomicBool>,
     filter: FilterType,
     save_dir: PathBuf,
+    client: AsyncClient,
 ) {
     while let Ok(html) = rx_html.recv().await {
         let links = task::spawn_blocking(move || {
@@ -82,7 +84,7 @@ pub async fn download_worker(
 
         let Some(links) = links else { continue };
 
-        if let Err(e) = save_torrent_files(links, &save_dir).await {
+        if let Err(e) = save_torrent_files(links, &save_dir, &client).await {
             error!("failed to save torrent: {e}");
         }
 
