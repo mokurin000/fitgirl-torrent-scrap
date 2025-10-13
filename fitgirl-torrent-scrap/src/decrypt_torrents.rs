@@ -7,7 +7,7 @@ use fitgirl_decrypt::{Attachment, Paste, base64::Engine as _, decrypt_with_key};
 use spdlog::{error, info};
 
 use crate::Game;
-use db_helper::{add_game, query_game, read_transac, write_transac};
+use db_helper::{add_game, add_game_date, query_torrent, read_transac, write_transac};
 
 pub(crate) async fn save_torrent_files(
     games: Vec<Game>,
@@ -19,7 +19,7 @@ pub(crate) async fn save_torrent_files(
     {
         let tsx = read_transac()?;
         for game in games {
-            let torrent = query_game(&tsx, &game.title)?;
+            let torrent = query_torrent(&tsx, &game.title)?;
             match torrent {
                 Some(torrent_name) => {
                     if save_dir.join(torrent_name).metadata().is_ok_and(|meta| {
@@ -49,7 +49,7 @@ pub(crate) async fn save_torrent_files(
         Game {
             paste_url: url,
             title,
-            ..
+            date,
         },
     ) in filtered_games
         .iter()
@@ -70,6 +70,7 @@ pub(crate) async fn save_torrent_files(
                 attachment_name,
             }) => {
                 add_game(&tsx, title, &attachment_name)?;
+                add_game_date(&tsx, title, date.to_string())?;
 
                 let output = save_dir.join(&attachment_name);
 

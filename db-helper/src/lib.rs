@@ -13,11 +13,19 @@ pub fn write_transac() -> Result<WriteTransaction, redb::Error> {
     Ok(DATABASE.begin_write()?)
 }
 
-pub fn query_game(
+pub fn query_torrent(
     tsx: &ReadTransaction,
     title: impl Into<String>,
 ) -> Result<Option<String>, redb::Error> {
-    let result = tsx.open_table(TABLE)?.get(title.into())?;
+    let result = tsx.open_table(GAME_TORRENT)?.get(title.into())?;
+    Ok(result.map(|g| g.value()))
+}
+
+pub fn query_date(
+    tsx: &ReadTransaction,
+    title: impl Into<String>,
+) -> Result<Option<String>, redb::Error> {
+    let result = tsx.open_table(GAME_PUBLISH_DATE)?.get(title.into())?;
     Ok(result.map(|g| g.value()))
 }
 
@@ -27,8 +35,8 @@ pub fn list_games(
     Ok(table
         .iter()?
         .filter_map(Result::ok)
-        .map(|(title, torrent)| (title.value(), torrent.value()))
-        .map(|(title, torrent)| Record { title, torrent }))
+        .map(|(title, value)| (title.value(), value.value()))
+        .map(|(title, value)| Record { title, value }))
 }
 
 pub fn add_game(
@@ -36,19 +44,31 @@ pub fn add_game(
     title: impl Into<String>,
     torrent_name: impl Into<String>,
 ) -> Result<(), redb::Error> {
-    let mut table = tsx.open_table(TABLE)?;
+    let mut table = tsx.open_table(GAME_TORRENT)?;
     table.insert(title.into(), torrent_name.into())?;
     Ok(())
 }
 
-pub const TABLE: TableDefinition<String, String> = TableDefinition::new("games");
+pub fn add_game_date(
+    tsx: &WriteTransaction,
+    title: impl Into<String>,
+    torrent_name: impl Into<String>,
+) -> Result<(), redb::Error> {
+    let mut table = tsx.open_table(GAME_PUBLISH_DATE)?;
+    table.insert(title.into(), torrent_name.into())?;
+    Ok(())
+}
+
+pub const GAME_TORRENT: TableDefinition<String, String> = TableDefinition::new("games");
+pub const GAME_PUBLISH_DATE: TableDefinition<String, String> = TableDefinition::new("games_date");
 static DATABASE: LazyLock<Database> = LazyLock::new(|| {
     let mut db = Database::create("game.redb").expect("failed to open database!");
     _ = db.compact();
 
     // create empty table if not existing
     let tsx = db.begin_write().unwrap();
-    tsx.open_table(TABLE).unwrap();
+    tsx.open_table(GAME_TORRENT).unwrap();
+    tsx.open_table(GAME_PUBLISH_DATE).unwrap();
     tsx.commit().expect("failed to init table!");
     db
 });
@@ -56,5 +76,5 @@ static DATABASE: LazyLock<Database> = LazyLock::new(|| {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Record {
     pub title: String,
-    pub torrent: String,
+    pub value: String,
 }
