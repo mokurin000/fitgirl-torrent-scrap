@@ -32,7 +32,11 @@ fn main() -> anyhow::Result<()> {
     let total_length = torrents_vec
         .par_iter()
         .filter_map(|bytes| {
-            librqbit_core::torrent_metainfo::torrent_from_bytes::<ByteBuf>(bytes).ok()
+            librqbit_core::torrent_metainfo::torrent_from_bytes::<ByteBuf>(bytes)
+                .inspect_err(|e| {
+                    eprintln!("warning: parse error, {e}");
+                })
+                .ok()
         })
         .filter_map(|meta| {
             meta.info
