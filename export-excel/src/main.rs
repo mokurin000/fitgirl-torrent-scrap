@@ -12,12 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let torrent = read.open_table(GAME_TORRENT)?;
 
     for Record { title, value } in list_games(&torrent)? {
-        if let Some(date) = query_date(&read, &title)? {
-            publish_dates.push(date);
-        } else {
-            publish_dates.push(String::new());
-        }
-
+        publish_dates.push(query_date(&read, &title)?.unwrap_or_default());
         titles.push(title);
         torrents.push(value);
     }
@@ -31,7 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Column::new("torrent".into(), torrent),
         Column::new("publish_date".into(), publish_date),
     ];
-    let df = DataFrame::new(columns)?;
+    let df = DataFrame::new_infer_height(columns)?;
     let mut df = df.unique_stable(Some(&["torrent".into()]), UniqueKeepStrategy::Last, None)?;
     df.sort_in_place(
         ["publish_date"],

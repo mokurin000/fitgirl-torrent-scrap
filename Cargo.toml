@@ -15,3 +15,7 @@ strip = true
 
 [workspace.dependencies]
 db-helper = { path = "./db-helper" }
+
+[patch.crates-io]
+polars = { git = "https://github.com/mokurin000/polars", branch = "fix/unpin-chrono" }
+polars-arrow = { git = "https://github.com/mokurin000/polars", branch = "fix/unpin-chrono" }
